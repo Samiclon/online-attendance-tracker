@@ -1,1 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SS 2 Attendance Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0f1923;
+    --ink-soft: #3a4a58;
+    --ink-mute: #7a8c9a;
+    --gold: #c9a84c;
+    --gold-light: #fef3cd;
+    --surface: #f7f4ef;
+    --white: #ffffff;
+    --green: #1a6e47;
+    --green-light: #d4eddf;
+    --red: #8b1a1a;
+    --red-light: #f5d5d5;
+    --blue-light: #e8f0fe;
+    --border: rgba(15,25,35,0.12);
+    --radius: 12px;
+  }
 
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 0 60px;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 0%, rgba(201,168,76,0.08) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 40% at 100% 100%, rgba(26,110,71,0.06) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(201,168,76,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(201,168,76,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .header {
+    width: 100%;
+    max-width: 480px;
+    padding: 44px 24px 24px;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+    animation: fadeDown 0.6s ease both;
+  }
+
+  .crest {
+    width: 60px; height: 60px;
+    margin: 0 auto 16px;
+    background: var(--gold);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+    box-shadow: 0 0 0 6px rgba(201,168,76,0.15), 0 0 0 12px rgba(201,168,76,0.06);
+  }
+
+  .school-name {
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 6px;
+  }
+
+  .portal-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 26px; color: var(--white);
+    line-height: 1.2; margin-bottom: 6px;
+  }
+
+  .portal-sub { font-size: 13px; color: var(--ink-mute); }
+
+  /* ── MODE BADGE ───────────────────────────────────── */
+  .mode-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 12px; border-radius: 100px;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+    text-transform: uppercase; margin-top: 10px;
+    border: 1px solid rgba(201,168,76,0.3);
+    color: var(--gold);
+  }
+
+  .mode-badge .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%; background: var(--gold);
+    animation: pulse 2s infinite;
+  }
+
+  /* ── CARD ─────────────────────────────────────────── */
+  .card {
+    width: calc(100% - 32px);
+    max-width: 460px;
+    background: var(--white);
+    border-radius: 20px;
+    padding: 28px 26px;
+    position: relative; z-index: 1;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.07), 0 20px 60px rgba(0,0,0,0.25), 0 0 0 1px rgba(201,168,76,0.15);
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ── FORM ELEMENTS ────────────────────────────────── */
+  .form-group { margin-bottom: 18px; }
+
+  label {
+    display: block;
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--ink-mute); margin-bottom: 7px;
+  }
+
+  select, input[type="text"], input[type="password"] {
+    width: 100%; height: 50px;
+    padding: 0 16px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px; color: var(--ink);
+    background: var(--surface);
+    outline: none;
+    appearance: none; -webkit-appearance: none;
+    transition: all 0.2s;
+  }
+
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%237a8c9a' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-color: var(--surface);
+    padding-right: 40px; cursor: pointer;
+  }
+
+  select:focus, input:focus {
+    border-color: var(--gold);
+    background: var(--white);
+    box-shadow: 0 0 0 4px rgba(201,168,76,0.12);
+  }
+
+  input.valid { border-color: var(--green); background: var(--white); }
+  input.error { border-color: var(--red); background: var(--white); }
+
+  /* ── PIN INPUT ────────────────────────────────────── */
+  .pin-wrapper { position: relative; }
+
+  .pin-wrapper input {
+    font-family: 'DM Mono', monospace;
+    font-size: 22px;
+    letter-spacing: 0.3em;
+    text-align: center;
+    padding: 0 50px 0 16px;
+  }
+
+  .pin-toggle {
+    position: absolute; right: 14px; top: 50%;
+    transform: translateY(-50%);
+    background: none; border: none;
+    cursor: pointer; font-size: 18px;
+    color: var(--ink-mute);
+    padding: 4px;
+  }
+
+  /* ── ID INPUT ─────────────────────────────────────── */
+  .id-wrapper { position: relative; }
+
+  .id-wrapper input {
+    font-family: 'DM Mono', monospace;
+    font-size: 16px; letter-spacing: 0.06em;
+    text-transform: uppercase; padding-right: 48px;
+  }
+
+  .id-status {
+    position: absolute; right: 14px; top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px; transition: all 0.2s;
+  }
+
+  /* ── NAME BOX ─────────────────────────────────────── */
+  .name-box {
+    min-height: 50px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0 16px;
+    display: flex; align-items: center;
+    background: var(--surface);
+    transition: all 0.3s;
+  }
+
+  .name-box.loading { border-color: var(--gold); background: var(--white); }
+  .name-box.found   { border-color: var(--green); background: var(--green-light); }
+  .name-box.error   { border-color: var(--red); background: var(--red-light); }
+
+  .name-placeholder { font-size: 14px; color: var(--ink-mute); font-style: italic; }
+  .name-value { font-size: 15px; font-weight: 600; color: var(--green); }
+  .name-error { font-size: 13px; color: var(--red); font-weight: 500; }
+
+  /* ── VERIFIED BADGE ──────────────────────────────── */
+  .verified-badge {
+    display: none; align-items: center; gap: 8px;
+    background: var(--green-light);
+    border: 1px solid rgba(26,110,71,0.2);
+    border-radius: 8px; padding: 10px 14px;
+    margin-bottom: 18px;
+    font-size: 13px; color: var(--green); font-weight: 500;
+    animation: fadeUp 0.3s ease both;
+  }
+  .verified-badge.show { display: flex; }
+
+  /* ── DATE DISPLAY ─────────────────────────────────── */
+  .date-display {
+    height: 50px; border: 1.5px solid var(--border);
+    border-radius: var(--radius); padding: 0 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--surface);
+  }
+  .date-val { font-size: 15px; font-weight: 500; color: var(--ink); }
+  .date-day { font-size: 12px; color: var(--ink-mute); }
+
+  /* ── DIVIDER ──────────────────────────────────────── */
+  .divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+  /* ── STEP INDICATOR ───────────────────────────────── */
+  .steps {
+    display: flex; gap: 6px; justify-content: center;
+    margin-bottom: 22px;
+  }
+
+  .step-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--border); transition: all 0.3s;
+  }
+  .step-dot.active { background: var(--gold); transform: scale(1.3); }
+  .step-dot.done   { background: var(--green); }
+
+  /* ── SECTION LABEL ────────────────────────────────── */
+  .section-label {
+    font-size: 12px; font-weight: 600;
+    color: var(--ink-soft); margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .section-label .badge {
+    background: var(--ink); color: var(--gold);
+    font-size: 10px; padding: 2px 8px;
+    border-radius: 100px; letter-spacing: 0.06em;
+  }
+
+  /* ── BUTTONS ──────────────────────────────────────── */
+  .btn {
+    width: 100%; height: 52px;
+    border: none; border-radius: var(--radius);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px; font-weight: 600;
+    letter-spacing: 0.04em; cursor: pointer;
+    transition: all 0.2s; position: relative;
+    overflow: hidden;
+  }
+
+  .btn-primary {
+    background: var(--ink); color: var(--gold);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: #1a2a3a; transform: translateY(-1px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+  }
+  .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+  .btn-ghost {
+    background: transparent; color: var(--ink-soft);
+    border: 1.5px solid var(--border); margin-top: 10px;
+    font-size: 13px; height: 44px;
+  }
+  .btn-ghost:hover { border-color: var(--ink); background: var(--surface); }
+
+  .btn-text { transition: opacity 0.2s; }
+  .btn-loader {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 0.2s;
+  }
+  .btn.loading .btn-text { opacity: 0; }
+  .btn.loading .btn-loader { opacity: 1; }
+
+  .spinner {
+    width: 22px; height: 22px;
+    border: 2.5px solid rgba(201,168,76,0.3);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  /* ── ERROR NOTE ───────────────────────────────────── */
+  .field-note { font-size: 12px; color: var(--ink-mute); margin-top: 5px; }
+  .field-error { font-size: 12px; color: var(--red); margin-top: 5px; font-weight: 500; }
+
+  /* ── SUCCESS ──────────────────────────────────────── */
+  .success-icon {
+    width: 72px; height: 72px;
+    background: var(--green-light); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 18px;
+    animation: scaleIn 0.4s 0.1s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+
+  .success-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 24px; color: var(--ink);
+    margin-bottom: 8px; text-align: center;
+  }
+
+  .success-msg { font-size: 14px; color: var(--ink-soft); line-height: 1.7; margin-bottom: 20px; text-align: center; }
+
+  .receipt { background: var(--surface); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 18px; }
+  .receipt-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px dashed var(--border); font-size: 13px; }
+  .receipt-row:last-child { border-bottom: none; }
+  .r-label { color: var(--ink-mute); }
+  .r-val { font-weight: 600; color: var(--ink); }
+  .r-present { color: var(--green); }
+  .ref-code { font-family: 'DM Mono', monospace; font-size: 11px; background: var(--ink); color: var(--gold); padding: 3px 8px; border-radius: 4px; }
+  .screenshot-note { font-size: 12px; color: var(--ink-mute); text-align: center; line-height: 1.6; }
+
+  /* ── ERROR / CLOSED ───────────────────────────────── */
+  .state-icon {
+    width: 72px; height: 72px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 18px;
+  }
+  .state-icon.error-bg { background: var(--red-light); }
+  .state-icon.closed-bg { background: var(--gold-light, #fef3cd); font-size: 36px; }
+
+  .state-title { font-family: 'DM Serif Display', serif; font-size: 22px; margin-bottom: 8px; text-align: center; }
+  .state-title.red { color: var(--red); }
+  .state-title.closed { color: var(--ink); }
+  .state-msg { font-size: 14px; color: var(--ink-soft); line-height: 1.7; margin-bottom: 20px; text-align: center; }
+
+  /* ── LOADING DOTS ─────────────────────────────────── */
+  .loading-dots { display: inline-flex; gap: 4px; align-items: center; }
+  .loading-dots span { width: 6px; height: 6px; background: var(--gold); border-radius: 50%; animation: bounce 0.8s infinite; }
+  .loading-dots span:nth-child(2) { animation-delay: 0.15s; }
+  .loading-dots span:nth-child(3) { animation-delay: 0.3s; }
+
+  /* ── FOOTER ───────────────────────────────────────── */
+  .footer { margin-top: 22px; font-size: 11px; color: rgba(255,255,255,0.18); text-align: center; position: relative; z-index: 1; animation: fadeUp 0.6s 0.3s ease both; }
+
+  /* ── ANIMATIONS ───────────────────────────────────── */
+  @keyframes fadeDown { from { opacity:0; transform:translateY(-16px); } to { opacity:1; transform:none; } }
+  @keyframes fadeUp   { from { opacity:0; transform:translateY(16px);  } to { opacity:1; transform:none; } }
+  @keyframes scaleIn  { from { opacity:0; transform:scale(0.5); } to { opacity:1; transform:scale(1); } }
+  @keyframes spin     { to { transform:rotate(360deg); } }
+  @keyframes bounce   { 0%,60%,100%{ transform:translateY(0); } 30%{ transform:translateY(-6px); } }
+  @keyframes pulse    { 0%,100%{ opacity:1; } 50%{ opacity:0.4; } }
+
+  @media(max-width:520px){ .card{ padding:22px 18px; } .portal-title{ font-size:22px; } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="crest">🎓</div>
+  <div class="school-name">SS 2 — Mathematics</div>
+  <div class="portal-title">Attendance Portal</div>
+  <div class="portal-sub">Mark your attendance for today's Saturday class</div>
+  <div class="mode-badge" id="modeBadge">
+    <span class="dot"></span>
+    <span id="modeLabel">Loading...</span>
+  </div>
+</div>
+
+<div class="card" id="mainCard">
+
+  <!-- ══ SCREEN 1: PIN + CLASS ══════════════════════════ -->
+  <div class="screen active" id="pinScreen">
+    <div class="steps">
+      <div class="step-dot active" id="dot1"></div>
+      <div class="step-dot" id="dot2"></div>
+      <div class="step-dot" id="dot3"></div>
+    </div>
+
+    <div class="section-label">
+      <span>Step 1 of 3</span>
+      <span class="badge">ACCESS</span>
+    </div>
+
+    <div class="form-group">
+      <label for="classSelect">Your class</label>
+      <select id="classSelect">
+        <option value="">— Select your class —</option>
+        <option value="A">Class A — Science</option>
+        <option value="B">Class B — Humanities</option>
+        <option value="C">Class C — Commercial</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="pinInput">Today's class PIN</label>
+      <div class="pin-wrapper">
+        <input type="password" id="pinInput" placeholder="• • • •" maxlength="8" autocomplete="off" inputmode="numeric">
+        <button class="pin-toggle" onclick="togglePIN()" title="Show/hide PIN">👁</button>
+      </div>
+      <div class="field-note">Your teacher announces this PIN at the start of class</div>
+      <div class="field-error" id="pinError" style="display:none"></div>
+    </div>
+
+    <button class="btn btn-primary" id="pinBtn" onclick="verifyPIN()">
+      <span class="btn-text">Continue →</span>
+      <span class="btn-loader"><div class="spinner"></div></span>
+    </button>
+  </div>
+
+  <!-- ══ SCREEN 2A: STUDENT ID MODE ═════════════════════ -->
+  <div class="screen" id="idScreen">
+    <div class="steps">
+      <div class="step-dot done"></div>
+      <div class="step-dot active"></div>
+      <div class="step-dot"></div>
+    </div>
+
+    <div class="section-label">
+      <span>Step 2 of 3</span>
+      <span class="badge">STUDENT ID</span>
+    </div>
+
+    <div class="form-group">
+      <label for="studentID">Your Student ID</label>
+      <div class="id-wrapper">
+        <input type="text" id="studentID" placeholder="e.g. SC001"
+          autocomplete="off" autocapitalize="characters" maxlength="8"
+          oninput="onIDInput()" onblur="lookupStudent()">
+        <span class="id-status" id="idStatus"></span>
+      </div>
+      <div class="field-note">Type your ID — your name will appear automatically</div>
+    </div>
+
+    <div class="form-group">
+      <label>Your registered name</label>
+      <div class="name-box" id="nameBox">
+        <span class="name-placeholder">Enter your Student ID above</span>
+      </div>
+    </div>
+
+    <div class="verified-badge" id="verifiedBadge">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1a6e47" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      <span id="verifiedText">Identity verified</span>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="form-group">
+      <label>Date</label>
+      <div class="date-display">
+        <span class="date-val" id="dateVal1">—</span>
+        <span class="date-day" id="dateDay1">—</span>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="idSubmitBtn" onclick="submitAttendance('studentID')" disabled>
+      <span class="btn-text">Mark My Attendance ✓</span>
+      <span class="btn-loader"><div class="spinner"></div></span>
+    </button>
+    <button class="btn btn-ghost" onclick="goBack('pinScreen')">← Back</button>
+  </div>
+
+  <!-- ══ SCREEN 2B: GENERAL ID MODE ═════════════════════ -->
+  <div class="screen" id="generalScreen">
+    <div class="steps">
+      <div class="step-dot done"></div>
+      <div class="step-dot active"></div>
+      <div class="step-dot"></div>
+    </div>
+
+    <div class="section-label">
+      <span>Step 2 of 3</span>
+      <span class="badge">SELECT NAME</span>
+    </div>
+
+    <div class="form-group">
+      <label for="nameSelect">Select your name</label>
+      <select id="nameSelect" onchange="onNameSelect()">
+        <option value="">— Select your name —</option>
+      </select>
+      <div class="field-note">Find your name in the list and select it</div>
+    </div>
+
+    <div class="verified-badge" id="verifiedBadgeG" style="display:none">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1a6e47" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      <span id="verifiedTextG">Name selected</span>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="form-group">
+      <label>Date</label>
+      <div class="date-display">
+        <span class="date-val" id="dateVal2">—</span>
+        <span class="date-day" id="dateDay2">—</span>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="generalSubmitBtn" onclick="submitAttendance('generalID')" disabled>
+      <span class="btn-text">Mark My Attendance ✓</span>
+      <span class="btn-loader"><div class="spinner"></div></span>
+    </button>
+    <button class="btn btn-ghost" onclick="goBack('pinScreen')">← Back</button>
+  </div>
+
+  <!-- ══ SCREEN 3: SUCCESS ═══════════════════════════════ -->
+  <div class="screen" id="successScreen">
+    <div class="success-icon">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#1a6e47" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+    </div>
+    <div class="success-title">Attendance marked!</div>
+    <div class="success-msg">Your attendance has been recorded and sent to your teacher.</div>
+    <div class="receipt" id="receipt"></div>
+    <div class="screenshot-note">📸 Screenshot this page as your proof of submission.</div>
+  </div>
+
+  <!-- ══ SCREEN 4: ERROR ═════════════════════════════════ -->
+  <div class="screen" id="errorScreen">
+    <div class="state-icon error-bg">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#8b1a1a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    </div>
+    <div class="state-title red">Submission failed</div>
+    <div class="state-msg" id="errorMsg">Something went wrong. Please try again.</div>
+    <button class="btn btn-ghost" onclick="goBack('pinScreen')" style="margin-top:0">← Start over</button>
+  </div>
+
+  <!-- ══ SCREEN 5: CLOSED ════════════════════════════════ -->
+  <div class="screen" id="closedScreen">
+    <div class="state-icon closed-bg">🔒</div>
+    <div class="state-title closed">Window is closed</div>
+    <div class="state-msg" id="closedMsg">The attendance window is not open right now. Your teacher will open it at the start of class.</div>
+  </div>
+
+</div>
+
+<div class="footer">SS 2 Mathematics 2026 · Attendance System · Built with Google Sheets</div>
+
+<script>
+// ============================================================
+//  CONFIGURATION — paste your Web App URL here
+// ============================================================
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby4d6ofpgFOloPhEH-9hlY_UNOPnDSFP10EPmrHHyi5eczfwhc78ztOdkBgXOany1oVHg/exec';
+const DEMO_MODE  = false;
+
+// ============================================================
+//  STATE
+// ============================================================
+let currentMode    = 'studentID'; // 'studentID' or 'generalID'
+let verifiedName   = null;
+let verifiedID     = null;
+let selectedClass  = '';
+let enteredPIN     = '';
+let lookupTimeout  = null;
+let isLooking      = false;
+
+// ============================================================
+//  INIT
+// ============================================================
+setupDates();
+loadPortalMode();
+
+function setupDates() {
+  const now    = new Date();
+  const days   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const dateStr = `${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+  const dayStr  = days[now.getDay()];
+  ['dateVal1','dateVal2'].forEach(id => { const el = document.getElementById(id); if(el) el.textContent = dateStr; });
+  ['dateDay1','dateDay2'].forEach(id => { const el = document.getElementById(id); if(el) el.textContent = dayStr; });
+}
+
+async function loadPortalMode() {
+  if (DEMO_MODE) {
+    currentMode = 'studentID';
+    updateModeBadge();
+    return;
+  }
+  try {
+    const res  = await fetch(SCRIPT_URL + '?action=getMode');
+    const data = await res.json();
+    if (data.mode) {
+      currentMode = data.mode;
+      updateModeBadge();
+    }
+  } catch(e) {
+    updateModeBadge();
+  }
+}
+
+function updateModeBadge() {
+  const label = document.getElementById('modeLabel');
+  if (label) {
+    label.textContent = currentMode === 'generalID' ? 'General ID Mode' : 'Student ID Mode';
+  }
+}
+
+// ============================================================
+//  SCREEN NAVIGATION
+// ============================================================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function goBack(screenId) {
+  verifiedName = null;
+  verifiedID   = null;
+  resetIDField();
+  showScreen(screenId);
+}
+
+// ============================================================
+//  PIN TOGGLE
+// ============================================================
+function togglePIN() {
+  const input = document.getElementById('pinInput');
+  input.type  = input.type === 'password' ? 'text' : 'password';
+}
+
+// ============================================================
+//  SCREEN 1: VERIFY PIN
+// ============================================================
+async function verifyPIN() {
+  selectedClass = document.getElementById('classSelect').value;
+  enteredPIN    = document.getElementById('pinInput').value.trim();
+
+  const errEl = document.getElementById('pinError');
+  errEl.style.display = 'none';
+
+  if (!selectedClass) {
+    errEl.textContent = 'Please select your class.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (!enteredPIN) {
+    errEl.textContent = 'Please enter the PIN announced by your teacher.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const btn = document.getElementById('pinBtn');
+  btn.classList.add('loading');
+  btn.disabled = true;
+
+  if (DEMO_MODE) {
+    await new Promise(r => setTimeout(r, 1200));
+    btn.classList.remove('loading');
+    btn.disabled = false;
+    // Demo: use studentID mode with fake students
+    currentMode = 'studentID';
+    updateModeBadge();
+    showScreen('idScreen');
+    return;
+  }
+
+  try {
+    const url  = `${SCRIPT_URL}?action=verifyPin&pin=${encodeURIComponent(enteredPIN)}&class=${encodeURIComponent(selectedClass)}`;
+    const res  = await fetch(url);
+    const data = await res.json();
+
+    btn.classList.remove('loading');
+    btn.disabled = false;
+
+    if (data.status === 'ok') {
+      currentMode = data.mode || 'studentID';
+      updateModeBadge();
+
+      if (currentMode === 'generalID') {
+        // Populate name dropdown
+        const sel = document.getElementById('nameSelect');
+        sel.innerHTML = '<option value="">— Select your name —</option>';
+        (data.students || []).forEach(function(s) {
+          const opt = document.createElement('option');
+          opt.value = s.name;
+          opt.setAttribute('data-id', s.id);
+          opt.textContent = s.name;
+          sel.appendChild(opt);
+        });
+        showScreen('generalScreen');
+      } else {
+        showScreen('idScreen');
+      }
+
+    } else if (data.status === 'wrong_pin') {
+      errEl.textContent = '❌ Incorrect PIN. Try again or ask your teacher.';
+      errEl.style.display = 'block';
+      document.getElementById('pinInput').value = '';
+      document.getElementById('pinInput').focus();
+
+    } else if (data.status === 'closed') {
+      document.getElementById('closedMsg').textContent = data.message;
+      showScreen('closedScreen');
+
+    } else {
+      errEl.textContent = data.message || 'Something went wrong. Try again.';
+      errEl.style.display = 'block';
+    }
+
+  } catch(err) {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+    errEl.textContent = 'No internet connection. Check your network and try again.';
+    errEl.style.display = 'block';
+  }
+}
+
+// ============================================================
+//  SCREEN 2A: STUDENT ID LOOKUP
+// ============================================================
+function onIDInput() {
+  const val = document.getElementById('studentID').value.trim().toUpperCase();
+  document.getElementById('studentID').value = val;
+  resetIDField();
+  clearTimeout(lookupTimeout);
+  if (val.length >= 5) {
+    lookupTimeout = setTimeout(lookupStudent, 600);
+  }
+}
+
+function resetIDField() {
+  verifiedName = null;
+  verifiedID   = null;
+  document.getElementById('idSubmitBtn').disabled = true;
+  document.getElementById('idStatus').textContent = '';
+  document.getElementById('studentID').className  = '';
+  document.getElementById('verifiedBadge').classList.remove('show');
+  const box = document.getElementById('nameBox');
+  box.className = 'name-box';
+  box.innerHTML = '<span class="name-placeholder">Enter your Student ID above</span>';
+}
+
+async function lookupStudent() {
+  if (isLooking) return;
+  const id = document.getElementById('studentID').value.trim().toUpperCase();
+  if (!id || id.length < 4) return;
+
+  if (!/^[A-Z]{2}\d{3,4}$/.test(id)) {
+    setNameBox('error', '✗ Invalid format — should be like SC001');
+    document.getElementById('studentID').className = 'error';
+    document.getElementById('idStatus').textContent = '❌';
+    return;
+  }
+
+  isLooking = true;
+  setNameBox('loading', '');
+  document.getElementById('idStatus').textContent = '';
+
+  if (DEMO_MODE) {
+    await new Promise(r => setTimeout(r, 900));
+    verifiedName = 'DEMO STUDENT';
+    verifiedID   = id;
+    setNameBox('found', '✓ DEMO STUDENT');
+    document.getElementById('studentID').className = 'valid';
+    document.getElementById('idStatus').textContent = '✅';
+    document.getElementById('verifiedBadge').classList.add('show');
+    document.getElementById('verifiedText').textContent = 'Identity verified — DEMO STUDENT';
+    document.getElementById('idSubmitBtn').disabled = false;
+    isLooking = false;
+    return;
+  }
+
+  try {
+    const url  = `${SCRIPT_URL}?action=lookup&id=${encodeURIComponent(id)}&class=${encodeURIComponent(selectedClass)}&pin=${encodeURIComponent(enteredPIN)}`;
+    const res  = await fetch(url);
+    const data = await res.json();
+
+    if (data.status === 'found') {
+      verifiedName = data.name;
+      verifiedID   = id;
+      setNameBox('found', '✓ ' + data.name);
+      document.getElementById('studentID').className = 'valid';
+      document.getElementById('idStatus').textContent = '✅';
+      document.getElementById('verifiedBadge').classList.add('show');
+      document.getElementById('verifiedText').textContent = 'Identity verified — ' + data.name;
+      document.getElementById('idSubmitBtn').disabled = false;
+
+    } else if (data.status === 'wrong_class') {
+      setNameBox('error', '✗ This ID belongs to Class ' + data.actualClass + ', not your selected class.');
+      document.getElementById('studentID').className = 'error';
+      document.getElementById('idStatus').textContent = '❌';
+
+    } else if (data.status === 'not_found') {
+      setNameBox('error', '✗ ID not found. Check your ID slip or ask your teacher.');
+      document.getElementById('studentID').className = 'error';
+      document.getElementById('idStatus').textContent = '❌';
+
+    } else if (data.status === 'closed') {
+      document.getElementById('closedMsg').textContent = data.message;
+      showScreen('closedScreen');
+
+    } else {
+      setNameBox('error', '✗ ' + (data.message || 'Could not verify. Try again.'));
+      document.getElementById('studentID').className = 'error';
+      document.getElementById('idStatus').textContent = '❌';
+    }
+
+  } catch(err) {
+    setNameBox('error', '✗ No internet. Check your connection.');
+    document.getElementById('studentID').className = 'error';
+    document.getElementById('idStatus').textContent = '❌';
+  }
+
+  isLooking = false;
+}
+
+function setNameBox(state, text) {
+  const box = document.getElementById('nameBox');
+  box.className = 'name-box' + (state !== 'idle' ? ' ' + state : '');
+  if (state === 'loading') {
+    box.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
+  } else if (state === 'found') {
+    box.innerHTML = `<span class="name-value">${text}</span>`;
+  } else if (state === 'error') {
+    box.innerHTML = `<span class="name-error">${text}</span>`;
+  } else {
+    box.innerHTML = '<span class="name-placeholder">Enter your Student ID above</span>';
+  }
+}
+
+// ============================================================
+//  SCREEN 2B: GENERAL ID — NAME SELECT
+// ============================================================
+function onNameSelect() {
+  const sel  = document.getElementById('nameSelect');
+  const name = sel.value;
+  const id   = sel.options[sel.selectedIndex]?.getAttribute('data-id') || '';
+
+  if (name) {
+    verifiedName = name;
+    verifiedID   = id;
+    document.getElementById('verifiedBadgeG').style.display = 'flex';
+    document.getElementById('verifiedTextG').textContent    = 'Selected: ' + name;
+    document.getElementById('generalSubmitBtn').disabled    = false;
+  } else {
+    verifiedName = null;
+    verifiedID   = null;
+    document.getElementById('verifiedBadgeG').style.display = 'none';
+    document.getElementById('generalSubmitBtn').disabled    = true;
+  }
+}
+
+// ============================================================
+//  SUBMIT — works for both modes
+// ============================================================
+async function submitAttendance(mode) {
+  if (!verifiedName) { alert('Please verify your identity first.'); return; }
+
+  const now = new Date();
+  const btnId = mode === 'studentID' ? 'idSubmitBtn' : 'generalSubmitBtn';
+  const btn   = document.getElementById(btnId);
+  btn.classList.add('loading');
+  btn.disabled = true;
+
+  const payload = {
+    mode:      mode,
+    studentID: verifiedID   || '',
+    name:      verifiedName || '',
+    class:     selectedClass,
+    pin:       enteredPIN,
+    date:      now.toISOString().split('T')[0],
+    timestamp: now.toISOString()
+  };
+
+  if (DEMO_MODE) {
+    await new Promise(r => setTimeout(r, 1600));
+    showSuccess(verifiedName, verifiedID, selectedClass, 'DEMO-' + Math.random().toString(36).substr(2,6).toUpperCase());
+    return;
+  }
+
+  try {
+    const res  = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+
+    btn.classList.remove('loading');
+
+    if (data.status === 'success') {
+      showSuccess(data.name || verifiedName, data.studentID || verifiedID, selectedClass, data.ref);
+    } else if (data.status === 'duplicate') {
+      showError('You have already marked your attendance today. Contact your teacher if this is wrong.');
+    } else if (data.status === 'closed') {
+      document.getElementById('closedMsg').textContent = data.message;
+      showScreen('closedScreen');
+    } else {
+      showError(data.message || 'Something went wrong. Please try again.');
+      btn.disabled = false;
+    }
+
+  } catch(err) {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+    showError('No internet connection. Check your network and try again.');
+  }
+}
+
+// ============================================================
+//  SHOW SCREENS
+// ============================================================
+function showSuccess(name, id, cls, ref) {
+  const now    = new Date();
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const time   = now.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+  const date   = `${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+  const clsMap = { A:'Class A — Science', B:'Class B — Humanities', C:'Class C — Commercial' };
+
+  document.getElementById('receipt').innerHTML = `
+    <div class="receipt-row"><span class="r-label">Name</span><span class="r-val">${name}</span></div>
+    <div class="receipt-row"><span class="r-label">Student ID</span><span class="r-val">${id || 'N/A'}</span></div>
+    <div class="receipt-row"><span class="r-label">Class</span><span class="r-val">${clsMap[cls] || cls}</span></div>
+    <div class="receipt-row"><span class="r-label">Date</span><span class="r-val">${date}</span></div>
+    <div class="receipt-row"><span class="r-label">Time</span><span class="r-val">${time}</span></div>
+    <div class="receipt-row"><span class="r-label">Status</span><span class="r-val r-present">✓ Present</span></div>
+    <div class="receipt-row"><span class="r-label">Ref</span><span class="r-val"><span class="ref-code">${ref || 'N/A'}</span></span></div>
+  `;
+  showScreen('successScreen');
+}
+
+function showError(msg) {
+  document.getElementById('errorMsg').textContent = msg;
+  showScreen('errorScreen');
+}
+
+// Enter key on PIN field
+document.getElementById('pinInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') verifyPIN();
+});
+</script>
+</body>
+</html>
